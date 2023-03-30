@@ -5,14 +5,13 @@
  */
 package GUI;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.Socket;
-import java.util.Scanner;
 import javax.swing.BoxLayout;
-import javax.swing.JPanel;
+import javax.swing.JScrollBar;
+import net.miginfocom.swing.MigLayout;
 
 /**
  *
@@ -34,9 +33,9 @@ public class ChatBoxClient extends javax.swing.JFrame {
         
         listchatbox.setVerticalScrollBar(new ScrollBarCustom());
         listchatbox.getVerticalScrollBar().setValue(1);
-        listchatbox.getVerticalScrollBar().setUnitIncrement(20);
-        BoxLayout boxlayout = new BoxLayout(panelchatchox, BoxLayout.Y_AXIS);
-        panelchatchox.setLayout(boxlayout);
+        listchatbox.getVerticalScrollBar().setUnitIncrement(20); 
+        
+        panelchatchox.setLayout(new MigLayout("fillx")); 
         joinServer(6666);
         listenForMessage();
         try {
@@ -68,28 +67,21 @@ public class ChatBoxClient extends javax.swing.JFrame {
     }
     
     public void scrolldown(){
-        listchatbox.revalidate(); //Update the scrollbar size
-        listchatbox.getVerticalScrollBar().setValue(listchatbox.getVerticalScrollBar().getValue());
+        this.revalidate(); //Update frame thì câu lên mới hoạt động
+        JScrollBar bar = listchatbox.getVerticalScrollBar();
+        bar.setValue(bar.getMaximum());     
     }
 
     
     public void addChatReceive(String mess,String name){
         Message message = new Message(mess, name);
-        JPanel tempPanel = new JPanel();
-        tempPanel.setBackground(Color.white);
-        tempPanel.setLayout(new BorderLayout());
-        tempPanel.add(message,BorderLayout.WEST);
-        panelchatchox.add(tempPanel);
+        panelchatchox.add(message,"wrap, w ::80%");
         scrolldown();
     }
     
     public void addChatSend(String mess){
         Message message = new Message(mess, "Bạn");
-        JPanel tempPanel = new JPanel();
-        tempPanel.setBackground(Color.white);
-        tempPanel.setLayout(new BorderLayout());
-        tempPanel.add(message,BorderLayout.EAST);
-        panelchatchox.add(tempPanel);
+        panelchatchox.add(message,"wrap, al right, w ::80%");
         scrolldown();
     }
     
@@ -158,11 +150,12 @@ public class ChatBoxClient extends javax.swing.JFrame {
         listchatbox.setBackground(new java.awt.Color(255, 51, 51));
         listchatbox.setBorder(null);
         listchatbox.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        listchatbox.setMaximumSize(new java.awt.Dimension(666, 539));
-        listchatbox.setMinimumSize(new java.awt.Dimension(666, 539));
+        listchatbox.setMaximumSize(null);
+        listchatbox.setMinimumSize(null);
 
         panelchatchox.setBackground(new java.awt.Color(255, 255, 255));
         panelchatchox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 10, 10, 10));
+        panelchatchox.setMinimumSize(new java.awt.Dimension(686, 549));
 
         javax.swing.GroupLayout panelchatchoxLayout = new javax.swing.GroupLayout(panelchatchox);
         panelchatchox.setLayout(panelchatchoxLayout);
@@ -229,13 +222,13 @@ public class ChatBoxClient extends javax.swing.JFrame {
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(listchatbox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(listchatbox, javax.swing.GroupLayout.DEFAULT_SIZE, 624, Short.MAX_VALUE)
             .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addComponent(listchatbox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(listchatbox, javax.swing.GroupLayout.DEFAULT_SIZE, 414, Short.MAX_VALUE)
                 .addGap(0, 0, 0)
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0))
@@ -247,7 +240,7 @@ public class ChatBoxClient extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(172, Short.MAX_VALUE))
+                .addGap(0, 234, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
