@@ -7,7 +7,11 @@ package GUI;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.GridLayout;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.net.Socket;
+import java.util.Scanner;
+import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
 /**
@@ -16,37 +20,119 @@ import javax.swing.JPanel;
  */
 public class ChatBoxClient extends javax.swing.JFrame {
 
+    
+    private Socket clientSocket;
+    DataInputStream input;
+    DataOutputStream output;
+    String clientUserName;
     /**
      * Creates new form ChatBoxClient
      */
     public ChatBoxClient() {
         initComponents();
+        clientUserName= "bot"+String.valueOf(Math.floor(Math.random()*100));
+        
         listchatbox.setVerticalScrollBar(new ScrollBarCustom());
         listchatbox.getVerticalScrollBar().setValue(1);
         listchatbox.getVerticalScrollBar().setUnitIncrement(20);
+        BoxLayout boxlayout = new BoxLayout(panelchatchox, BoxLayout.Y_AXIS);
+        panelchatchox.setLayout(boxlayout);
+        joinServer(6666);
+        listenForMessage();
+        try {
+            output.writeUTF(clientUserName);
+            output.flush();
+        } catch (Exception e) {
+            System.out.println("Lỗi lắng nghe ban đầu");
+        }
+    }
+    
+    public ChatBoxClient(String name) {
+        initComponents();
+        clientUserName= name;
+        listchatbox.setVerticalScrollBar(new ScrollBarCustom());
+        listchatbox.getVerticalScrollBar().setValue(1);
+        listchatbox.getVerticalScrollBar().setUnitIncrement(20);
+        BoxLayout boxlayout = new BoxLayout(panelchatchox, BoxLayout.Y_AXIS);
+        panelchatchox.setLayout(boxlayout);
         
-        panelchatchox.setLayout(new GridLayout(0, 1, 0, 0));
-        addChatReceive("Đây là một tin nhắn siêu siêu siêu siêu siêu siê siêu siêu siê siêu siêu siê siêu siêu siê siêu siêu siê siêu siêu siê siêu siêu siê siêu siêu siê siêu siêu siê siêu siêu siê dài ","ten");
-        addChatReceive("Tin nhắn 2","ten");
-        addChatReceive("Tin nhắn 3","ten");
-        addChatReceive("Tin nhắn 4","ten");
-        addChatReceive("Tin nhắn 1","ten");
-        addChatReceive("Tin nhắn 2","ten");
-        addChatReceive("Tin nhắn 3","ten");
-        addChatReceive("Tin nhắn 4","ten");
-        addChatReceive("Tin nhắn 1","ten");
-        addChatReceive("Tin nhắn 2","ten");
-        addChatReceive("Tin nhắn 3","ten");
-        addChatReceive("Tin nhắn 4","ten");
+        joinServer(6666);
+        listenForMessage();
+        try {
+            output.writeUTF(clientUserName);
+            output.flush();
+        } catch (Exception e) {
+            System.out.println("Lỗi lắng nghe ban đầu");
+        }
+        
+    }
+    
+    public void scrolldown(){
+        listchatbox.revalidate(); //Update the scrollbar size
+        listchatbox.getVerticalScrollBar().setValue(listchatbox.getVerticalScrollBar().getValue());
     }
 
     
     public void addChatReceive(String mess,String name){
         Message message = new Message(mess, name);
         JPanel tempPanel = new JPanel();
+        tempPanel.setBackground(Color.white);
         tempPanel.setLayout(new BorderLayout());
         tempPanel.add(message,BorderLayout.WEST);
         panelchatchox.add(tempPanel);
+        scrolldown();
+    }
+    
+    public void addChatSend(String mess){
+        Message message = new Message(mess, "Bạn");
+        JPanel tempPanel = new JPanel();
+        tempPanel.setBackground(Color.white);
+        tempPanel.setLayout(new BorderLayout());
+        tempPanel.add(message,BorderLayout.EAST);
+        panelchatchox.add(tempPanel);
+        scrolldown();
+    }
+    
+    public void sendMessage(){
+        try {
+            String messsend = txtchatbox.getText();
+            if (!messsend.isEmpty()){
+                addChatSend(messsend);
+                output.writeUTF(clientUserName+"###"+messsend);
+                output.flush();
+            }
+        } catch (Exception e) {
+            System.out.println("Lỗi tại sendMessage");
+        }
+    }
+    
+    public void listenForMessage(){
+        new Thread(new Runnable(){
+            @Override
+            public void run() {
+                String msgfromGroup;
+                System.out.println("Đang nghe");
+                while (clientSocket.isConnected()) {
+                    try {
+                        msgfromGroup= input.readUTF();
+                        addChatReceive(msgfromGroup.substring( msgfromGroup.indexOf("###")+3, msgfromGroup.length()),msgfromGroup.substring(0, msgfromGroup.indexOf("###")));
+                    } catch (Exception e) {
+                        System.out.println("Lỗi listenForMessage");
+                    }
+                }
+            }
+            
+        }).start();
+    }
+    
+    public void joinServer(int host){
+        try {
+            clientSocket = new Socket("localhost",host);
+            input = new DataInputStream(clientSocket.getInputStream());
+            output = new DataOutputStream(clientSocket.getOutputStream());
+        } catch (Exception e) {
+            System.out.println("Lỗi tại join client");
+        }
     }
     /**
      * This method is called from within the constructor to initialize the form.
@@ -69,11 +155,14 @@ public class ChatBoxClient extends javax.swing.JFrame {
 
         jPanel1.setBackground(new java.awt.Color(255, 255, 255));
 
-        listchatbox.setBackground(new java.awt.Color(255, 255, 255));
+        listchatbox.setBackground(new java.awt.Color(255, 51, 51));
         listchatbox.setBorder(null);
         listchatbox.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        listchatbox.setMaximumSize(new java.awt.Dimension(666, 539));
+        listchatbox.setMinimumSize(new java.awt.Dimension(666, 539));
 
         panelchatchox.setBackground(new java.awt.Color(255, 255, 255));
+        panelchatchox.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 10, 10, 10));
 
         javax.swing.GroupLayout panelchatchoxLayout = new javax.swing.GroupLayout(panelchatchox);
         panelchatchox.setLayout(panelchatchoxLayout);
@@ -92,10 +181,28 @@ public class ChatBoxClient extends javax.swing.JFrame {
         txtchatbox.setForeground(new java.awt.Color(102, 102, 102));
         txtchatbox.setText("Nhập tin nhắn ...");
         txtchatbox.setMargin(new java.awt.Insets(2, 10, 2, 2));
+        txtchatbox.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                txtchatboxFocusGained(evt);
+            }
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                txtchatboxFocusLost(evt);
+            }
+        });
+        txtchatbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtchatboxActionPerformed(evt);
+            }
+        });
 
         jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/image/plane.png"))); // NOI18N
         jLabel1.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jLabel1.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jLabel1MouseClicked(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -122,13 +229,13 @@ public class ChatBoxClient extends javax.swing.JFrame {
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(listchatbox)
+            .addComponent(listchatbox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addComponent(listchatbox, javax.swing.GroupLayout.DEFAULT_SIZE, 490, Short.MAX_VALUE)
+                .addComponent(listchatbox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGap(0, 0, 0)
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0))
@@ -140,7 +247,7 @@ public class ChatBoxClient extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(192, Short.MAX_VALUE))
+                .addContainerGap(172, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -150,6 +257,36 @@ public class ChatBoxClient extends javax.swing.JFrame {
         pack();
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
+
+    private void txtchatboxFocusGained(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtchatboxFocusGained
+        // TODO add your handling code here:
+        if (txtchatbox.getText().equals("Nhập tin nhắn ...")){
+            txtchatbox.setText("");
+            txtchatbox.setForeground(Color.BLACK);
+
+        }
+    }//GEN-LAST:event_txtchatboxFocusGained
+
+    private void txtchatboxFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtchatboxFocusLost
+        // TODO add your handling code here:
+        if (txtchatbox.getText().equals("")){
+            txtchatbox.setText("Nhập tin nhắn ...");
+            txtchatbox.setForeground(new Color(102,102,102));
+        }
+    }//GEN-LAST:event_txtchatboxFocusLost
+
+    private void jLabel1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel1MouseClicked
+        // TODO add your handling code here:
+        sendMessage();
+        txtchatbox.setText("");
+        
+    }//GEN-LAST:event_jLabel1MouseClicked
+
+    private void txtchatboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtchatboxActionPerformed
+        // TODO add your handling code here:
+        sendMessage();
+        txtchatbox.setText("");
+    }//GEN-LAST:event_txtchatboxActionPerformed
 
     /**
      * @param args the command line arguments

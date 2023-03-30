@@ -112,7 +112,7 @@ public class Server extends javax.swing.JFrame {
                 Socket socket = serverSocket.accept();
                 ClientServer clientServer = new ClientServer(socket);
                 // in tại console của client
-                broadcastMessage(clientServer.clientName+" đã tham gia vào phòng","");
+                broadcastMessage(clientServer.clientName+"###Chào mọi người tôi mới gia nhập phòng chat","");
                 clientList.add(clientServer);
                 // in tại console của server
                 System.out.println(clientServer.clientName+" đã tham gia nhóm chat");
@@ -144,8 +144,8 @@ public class Server extends javax.swing.JFrame {
             try{
                 // không gửi cho người đã nhắn tin
                 System.out.println(clientList.size());
-                System.out.println("mess"+message);
-                System.out.println("mess send"+usernamesend);
+                System.out.println(message);
+                System.out.println(usernamesend);
                 if(!client.clientName.equals(usernamesend)){
                     client.output.writeUTF(message);
                     client.output.flush();
