@@ -30,40 +30,29 @@ public class ChatBoxClient extends javax.swing.JFrame {
     public ChatBoxClient() {
         initComponents();
         clientUserName= "bot"+String.valueOf(Math.floor(Math.random()*100));
-        
+        initComponent(clientUserName,6666);
+    }
+    
+    public ChatBoxClient(String name,int portNumber) {
+        initComponents();
+        clientUserName= name;
+        initComponent(name,portNumber);
+    }
+    
+    public void initComponent(String name,int portNumber){
         listchatbox.setVerticalScrollBar(new ScrollBarCustom());
         listchatbox.getVerticalScrollBar().setValue(1);
         listchatbox.getVerticalScrollBar().setUnitIncrement(20); 
         
         panelchatchox.setLayout(new MigLayout("fillx")); 
-        joinServer(6666);
+        joinServer(portNumber);
         listenForMessage();
         try {
-            output.writeUTF(clientUserName);
+            output.writeUTF(name);
             output.flush();
         } catch (Exception e) {
             System.out.println("Lỗi lắng nghe ban đầu");
         }
-    }
-    
-    public ChatBoxClient(String name) {
-        initComponents();
-        clientUserName= name;
-        listchatbox.setVerticalScrollBar(new ScrollBarCustom());
-        listchatbox.getVerticalScrollBar().setValue(1);
-        listchatbox.getVerticalScrollBar().setUnitIncrement(20);
-        BoxLayout boxlayout = new BoxLayout(panelchatchox, BoxLayout.Y_AXIS);
-        panelchatchox.setLayout(boxlayout);
-        
-        joinServer(6666);
-        listenForMessage();
-        try {
-            output.writeUTF(clientUserName);
-            output.flush();
-        } catch (Exception e) {
-            System.out.println("Lỗi lắng nghe ban đầu");
-        }
-        
     }
     
     public void scrolldown(){
