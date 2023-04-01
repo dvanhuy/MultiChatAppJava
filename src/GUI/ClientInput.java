@@ -19,6 +19,11 @@ public class ClientInput extends javax.swing.JFrame {
     public ClientInput() {
         initComponents();
     }
+    
+    public ClientInput(String port,String name) {
+        initComponents();
+        joinRoom(port,name);
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -116,9 +121,13 @@ public class ClientInput extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btJoinActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btJoinActionPerformed
-        // TODO add your handling code here:
+        joinRoom(txtMaPhong.getText(),TxtTenDangKi.getText());
+    }//GEN-LAST:event_btJoinActionPerformed
+
+    
+    public void joinRoom(String port,String name){
         boolean run = true;
-        if (TxtTenDangKi.getText().isEmpty()){
+        if (name.isEmpty()){
             JOptionPane.showMessageDialog(this, "Chưa nhập tên", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
             run = false;
         }
@@ -126,19 +135,19 @@ public class ClientInput extends javax.swing.JFrame {
         int maphong=6666;
         if (run){
             try {
-            maphong = Integer.parseInt(txtMaPhong.getText());
+            maphong = Integer.parseInt(port);
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(this, "Nhập sai mã phòng", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
                 run= false;
             }
         }
         if (run){
-            ChatBoxClient boxClient = new ChatBoxClient(TxtTenDangKi.getText(),maphong);
+            ChatBoxClient boxClient = new ChatBoxClient(name,maphong);
             boxClient.setVisible(true);
             this.dispose();
         }
-    }//GEN-LAST:event_btJoinActionPerformed
-
+    }
+    
     /**
      * @param args the command line arguments
      */
