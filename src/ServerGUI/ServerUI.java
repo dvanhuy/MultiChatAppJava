@@ -7,17 +7,14 @@ package ServerGUI;
 
 import define.ClientDefine;
 import define.ServerDefine;
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.Iterator;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
-import multichatapp.ClientServer;
 
 /**
  *
@@ -89,10 +86,18 @@ public class ServerUI extends javax.swing.JFrame {
     public void initServer(ServerDefine server){
         try {
             while (!server.getServerSocket().isClosed()){
+                //Client nào accept sẽ được lấy theo từng phòng
                 Socket socket = server.getServerSocket().accept();
                 ClientDefine client = new ClientDefine(socket);
-                // in tại console của client
+                // Gửi cho toàn bộ client khác trang room với cú pháp ten###mess
                 broadcastMessage(client.getClientName()+"###Chào mọi người, tôi mới gia nhập phòng chat","",server);
+                //Lúc client kết nối sẽ trả về danh sách các client hiện tài trong phòng
+                String listClientInRoom="&User&";
+                for (ClientDefine clientDefine : server.getClientList()) {
+                    listClientInRoom+=clientDefine.getClientName()+",";
+                }
+                client.getOutput().writeUTF(listClientInRoom);
+                //thêm client vào server được tạo
                 server.getClientList().add(client);
                 // in tại console của server
                 System.out.println(client.getClientName()+" đã tham gia nhóm chat");

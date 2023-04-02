@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package GUI;
+package ClientGUI;
 
 import java.awt.Color;
 import java.io.DataInputStream;
@@ -28,8 +28,8 @@ public class ChatBoxClient extends javax.swing.JFrame {
      */
     public ChatBoxClient() {
         initComponents();
-        clientUserName= "bot"+String.valueOf(Math.floor(Math.random()*100));
-        initComponent(clientUserName,6666);
+//        clientUserName= "bot"+String.valueOf(Math.floor(Math.random()*100));
+//        initComponent(clientUserName,6666);
     }
     
     public ChatBoxClient(String name,int portNumber) {
@@ -95,7 +95,13 @@ public class ChatBoxClient extends javax.swing.JFrame {
                 while (clientSocket.isConnected()) {
                     try {
                         msgfromGroup= input.readUTF();
-                        addChatReceive(msgfromGroup.substring( msgfromGroup.indexOf("###")+3, msgfromGroup.length()),msgfromGroup.substring(0, msgfromGroup.indexOf("###")));
+                        if(msgfromGroup.contains("&User&")){
+                            System.out.println(msgfromGroup);
+                        }
+                        // nhận tin nhắn được gửi từ server (Từ client khác gửi tới)
+                        if(msgfromGroup.contains("###")){
+                            addChatReceive(msgfromGroup.substring( msgfromGroup.indexOf("###")+3, msgfromGroup.length()),msgfromGroup.substring(0, msgfromGroup.indexOf("###")));
+                        }
                     } catch (Exception e) {
                         System.out.println("Lỗi listenForMessage");
                     }
