@@ -5,9 +5,6 @@
  */
 package main;
 
-import GUI.ClientInput;
-import ServerGUI.ServerUI;
-
 /**
  *
  * @author ADMIN

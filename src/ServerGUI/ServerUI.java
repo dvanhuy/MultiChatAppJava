@@ -7,9 +7,14 @@ package ServerGUI;
 
 import define.ClientDefine;
 import define.ServerDefine;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import multichatapp.ClientServer;
@@ -30,6 +35,30 @@ public class ServerUI extends javax.swing.JFrame {
         } catch (Exception e) {
             System.out.println("Không thể tạo server gốc");
         }
+        
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {                    
+                    Socket socket;
+                    try {
+                        socket = serverRoot.accept();
+                        DataOutputStream output = new DataOutputStream(socket.getOutputStream());
+                        String listRoom ="";
+                        for (ServerDefine serverDefine : listServer) {
+                            listRoom+=serverDefine.getServerSocket().getLocalPort()+",";
+                        }
+//                        if(listRoom.equals("")){
+//                            listRoom= listRoom.substring(0, listRoom.length()-1);
+//                        }
+                        output.writeUTF(listRoom);
+                        socket.close();
+                    } catch (IOException ex) {
+                        System.out.println("Lỗi tại Thread  accept");
+                    }
+                }
+            }
+        }).start();
     }
 
     public void openNewRoom(int port){
