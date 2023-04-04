@@ -9,6 +9,7 @@ import java.awt.Color;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.Socket;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollBar;
 import net.miginfocom.swing.MigLayout;
 
@@ -23,6 +24,7 @@ public class ChatBoxClient extends javax.swing.JFrame {
     DataInputStream input;
     DataOutputStream output;
     String clientUserName;
+    Boolean listenMess=true;
     /**
      * Creates new form ChatBoxClient
      */
@@ -86,24 +88,27 @@ public class ChatBoxClient extends javax.swing.JFrame {
         }
     }
     
+    public void turnOff(){
+        ClientInput clientInput = new ClientInput("fail");
+        clientInput.setVisible(true);
+        this.dispose();
+    }
+    
     public void listenForMessage(){
         new Thread(new Runnable(){
             @Override
             public void run() {
                 String msgfromGroup;
                 System.out.println("Đang nghe");
-                while (clientSocket.isConnected()) {
+                while (clientSocket.isConnected()&&listenMess) {
                     try {
                         msgfromGroup= input.readUTF();
-                        if(msgfromGroup.contains("&User&")){
-                            System.out.println(msgfromGroup);
-                        }
-                        // nhận tin nhắn được gửi từ server (Từ client khác gửi tới)
-                        if(msgfromGroup.contains("###")){
-                            addChatReceive(msgfromGroup.substring( msgfromGroup.indexOf("###")+3, msgfromGroup.length()),msgfromGroup.substring(0, msgfromGroup.indexOf("###")));
-                        }
+                        addChatReceive(msgfromGroup.substring( msgfromGroup.indexOf("###")+3, msgfromGroup.length()),msgfromGroup.substring(0, msgfromGroup.indexOf("###")));
                     } catch (Exception e) {
+                        // không để kết nối tới server
                         System.out.println("Lỗi listenForMessage");
+                        listenMess= false;
+                        turnOff();
                     }
                 }
             }
@@ -232,9 +237,7 @@ public class ChatBoxClient extends javax.swing.JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 234, Short.MAX_VALUE))
+            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -303,11 +306,11 @@ public class ChatBoxClient extends javax.swing.JFrame {
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new ChatBoxClient().setVisible(true);
-            }
-        });
+//        java.awt.EventQueue.invokeLater(new Runnable() {
+//            public void run() {
+//                new ChatBoxClient().setVisible(true);
+//            }
+//        });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

@@ -7,12 +7,12 @@ package ServerGUI;
 
 import define.ClientDefine;
 import define.ServerDefine;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Iterator;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 
@@ -23,16 +23,18 @@ import javax.swing.JOptionPane;
 public class ServerUI extends javax.swing.JFrame {
 
     ServerSocket serverRoot;
+    ServerSocket serverRootCreateRoom;
     ArrayList<ServerDefine> listServer = new ArrayList<>();
     
     public ServerUI() {
         initComponents();
         try {
-            serverRoot = new ServerSocket(1);
+            serverRoot = new ServerSocket(10000);
         } catch (Exception e) {
             System.out.println("Không thể tạo server gốc");
         }
         
+        // gửi danh sách server tới các client input
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -45,9 +47,6 @@ public class ServerUI extends javax.swing.JFrame {
                         for (ServerDefine serverDefine : listServer) {
                             listRoom+=serverDefine.getServerSocket().getLocalPort()+",";
                         }
-//                        if(listRoom.equals("")){
-//                            listRoom= listRoom.substring(0, listRoom.length()-1);
-//                        }
                         output.writeUTF(listRoom);
                         socket.close();
                     } catch (IOException ex) {
@@ -56,8 +55,36 @@ public class ServerUI extends javax.swing.JFrame {
                 }
             }
         }).start();
+        
+        //nhận yêu cầu tạo server
+        try {
+            serverRootCreateRoom = new ServerSocket(10001);
+        } catch (Exception e) {
+            System.out.println("Không thể tạo serverRootCreateRoom");
+        }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {                    
+                    Socket socket;
+                    try {
+                        socket = serverRootCreateRoom.accept();
+                        DataInputStream input = new DataInputStream(socket.getInputStream());
+                        String mess = input.readUTF();
+                        if (mess.contains("Server###")){
+                            openNewRoom(Integer.parseInt(mess.substring(mess.indexOf("Server###")+9, mess.length())));
+                            updateListRoom();
+                        }
+                        socket.close();
+                    } catch (IOException ex) {
+                        System.out.println("Lỗi tại Thread  accept");
+                    }
+                }
+            }
+        }).start();
     }
-
+    
+    // mở phòng mới
     public void openNewRoom(int port){
         try {
             ServerSocket serverSocket = new ServerSocket(port);
@@ -75,6 +102,7 @@ public class ServerUI extends javax.swing.JFrame {
         }
     }
     
+    //cập nhật danh sách phòng trên giao diện
     public void updateListRoom(){
         DefaultListModel<String> modelList = new DefaultListModel<>(); 
         for (ServerDefine serverDefine : listServer) {
@@ -83,6 +111,7 @@ public class ServerUI extends javax.swing.JFrame {
         listRoom.setModel(modelList);
     }
     
+    // khởi tạo danh sách các server
     public void initServer(ServerDefine server){
         try {
             while (!server.getServerSocket().isClosed()){
@@ -91,14 +120,9 @@ public class ServerUI extends javax.swing.JFrame {
                 ClientDefine client = new ClientDefine(socket);
                 // Gửi cho toàn bộ client khác trang room với cú pháp ten###mess
                 broadcastMessage(client.getClientName()+"###Chào mọi người, tôi mới gia nhập phòng chat","",server);
-                //Lúc client kết nối sẽ trả về danh sách các client hiện tài trong phòng
-                String listClientInRoom="&User&";
-                for (ClientDefine clientDefine : server.getClientList()) {
-                    listClientInRoom+=clientDefine.getClientName()+",";
-                }
-                client.getOutput().writeUTF(listClientInRoom);
                 //thêm client vào server được tạo
                 server.getClientList().add(client);
+                
                 // in tại console của server
                 System.out.println(client.getClientName()+" đã tham gia nhóm chat");
                 new Thread(new Runnable() {
@@ -112,7 +136,6 @@ public class ServerUI extends javax.swing.JFrame {
                                 System.out.println("Nhận tin từ client "+client.getClientName());
                                 broadcastMessage(mess,client.getClientName(),server);
                             } catch (Exception e) {
-//                                closeEveryThing(clientSocket, bufferedReader, bufferedWriter);
                                 System.out.println(client.getClientName()+" đã ròi khỏi nhóm chat");
                                 server.getClientList().remove(client);
                                 broadcastMessage(client.getClientName()+"###Đã rời khỏi phòng chat","",server);
@@ -126,7 +149,7 @@ public class ServerUI extends javax.swing.JFrame {
             System.out.println("Lỗi initServer "+e);
         }
     }
-    
+    // phát tin nhắn nhận được sang các client khác cùng server
     public void broadcastMessage(String message,String usernamesend,ServerDefine server){
         for (ClientDefine client: server.getClientList())
         {
@@ -139,7 +162,6 @@ public class ServerUI extends javax.swing.JFrame {
             }
             catch(Exception e){
                 System.out.println("Lỗi tại broadcastMessage");
-//                closeEveryThing(clientSocket,bufferedReader,bufferedWriter);
             }
         }
     }
@@ -158,12 +180,20 @@ public class ServerUI extends javax.swing.JFrame {
         listRoom = new javax.swing.JList<>();
         btRemoveRoom = new javax.swing.JButton();
         btAddRoom = new javax.swing.JButton();
-        jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
+        jLabel1 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        txtnumberclient = new javax.swing.JLabel();
+        txtnumberid = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         listRoom.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+        listRoom.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
+            public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
+                listRoomValueChanged(evt);
+            }
+        });
         jScrollPane1.setViewportView(listRoom);
 
         btRemoveRoom.setText("Đóng phòng");
@@ -208,13 +238,26 @@ public class ServerUI extends javax.swing.JFrame {
                 .addGap(0, 3, Short.MAX_VALUE))
         );
 
-        jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/image/settingImg.png"))); // NOI18N
-
         jLabel3.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel3.setText("Thông tin chi tiết");
         jLabel3.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+
+        jLabel1.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel1.setText("Số người trong phòng: ");
+
+        jLabel2.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel2.setText("Mã phòng: ");
+
+        txtnumberclient.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        txtnumberclient.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        txtnumberclient.setText(" ");
+
+        txtnumberid.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        txtnumberid.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        txtnumberid.setText(" ");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -225,24 +268,36 @@ public class ServerUI extends javax.swing.JFrame {
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, 281, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(jLabel2))
-                    .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, 281, Short.MAX_VALUE))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 128, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(18, 18, 18)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(txtnumberclient, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(txtnumberid, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                         .addGap(27, 27, 27)
                         .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabel2)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel1)
+                            .addComponent(txtnumberclient))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel2)
+                            .addComponent(txtnumberid))))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -263,7 +318,41 @@ public class ServerUI extends javax.swing.JFrame {
 
     private void btRemoveRoomActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btRemoveRoomActionPerformed
         // TODO add your handling code here:
+        // kiểm tra đã chọn số phòng hay chưa
+        if (listRoom.getSelectedValue()==null){
+            JOptionPane.showMessageDialog(this, "Chưa chọn phòng", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+        }
+        else{
+            // xóa phòng trong danh sách đã lưu
+            ServerDefine serverDefinetemp = null;
+            for (ServerDefine serverDefine : listServer) {
+                if (serverDefine.getServerSocket().getLocalPort()==Integer.parseInt(listRoom.getSelectedValue())){
+                    serverDefinetemp=serverDefine;
+                }
+            }
+            try {
+                serverDefinetemp.getServerSocket().close();
+                for (ClientDefine cd :serverDefinetemp.getClientList()){
+                    cd.getSocket().close();
+                }
+            } catch (IOException ex) {
+                System.out.println("Lỗi tại serverDefinetemp.getServerSocket().close();");
+            }
+            listServer.remove(serverDefinetemp);
+            updateListRoom();
+        }
+        
     }//GEN-LAST:event_btRemoveRoomActionPerformed
+
+    private void listRoomValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_listRoomValueChanged
+        // TODO add your handling code here:
+        for (ServerDefine serverDefine : listServer) {
+            if (serverDefine.getServerSocket().getLocalPort()==Integer.parseInt(listRoom.getSelectedValue())){
+                txtnumberid.setText(String.valueOf(serverDefine.getServerSocket().getLocalPort()));
+                txtnumberclient.setText(String.valueOf(serverDefine.getClientList().size()));
+            }
+        }
+    }//GEN-LAST:event_listRoomValueChanged
 
     /**
      * @param args the command line arguments
@@ -303,10 +392,13 @@ public class ServerUI extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btAddRoom;
     private javax.swing.JButton btRemoveRoom;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JList<String> listRoom;
+    private javax.swing.JLabel txtnumberclient;
+    private javax.swing.JLabel txtnumberid;
     // End of variables declaration//GEN-END:variables
 }

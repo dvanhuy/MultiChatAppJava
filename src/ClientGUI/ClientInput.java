@@ -6,6 +6,7 @@
 package ClientGUI;
 
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import javax.swing.DefaultListModel;
@@ -19,8 +20,18 @@ public class ClientInput extends javax.swing.JFrame {
 
     public ClientInput() {
         initComponents();
+        getListRoom();
+    }
+    
+    public ClientInput(String text) {
+        initComponents();
+        getListRoom();
+        JOptionPane.showMessageDialog(this, "Mất kết nối tới server","Thông báo",JOptionPane.INFORMATION_MESSAGE);
+    }
+    // kết nối tới cổng mặc định để lấy danh sách room
+    public void getListRoom(){
         try {
-            Socket socket = new Socket("localhost", 1);
+            Socket socket = new Socket("localhost", 10000);
             DataInputStream input = new DataInputStream(socket.getInputStream());
             String listRoom = input.readUTF();
             String[] listRoomArray = listRoom.split(",");
@@ -33,11 +44,6 @@ public class ClientInput extends javax.swing.JFrame {
         } catch (IOException ex) {
             System.out.println("Lỗi lấy dữ liệu từ Server "+ex);
         }
-    }
-    
-    public ClientInput(String port,String name) {
-        initComponents();
-        joinRoom(port,name);
     }
 
     /**
@@ -57,6 +63,7 @@ public class ClientInput extends javax.swing.JFrame {
         jScrollPane1 = new javax.swing.JScrollPane();
         jListRoom = new javax.swing.JList<>();
         jLabel4 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -79,6 +86,11 @@ public class ClientInput extends javax.swing.JFrame {
 
         btCreate.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         btCreate.setText("Tạo mới");
+        btCreate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btCreateActionPerformed(evt);
+            }
+        });
 
         jListRoom.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
         jScrollPane1.setViewportView(jListRoom);
@@ -86,16 +98,26 @@ public class ClientInput extends javax.swing.JFrame {
         jLabel4.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         jLabel4.setText("Danh sách phòng");
 
+        jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/image/tabler_reload.png"))); // NOI18N
+        jLabel2.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jLabel2MouseClicked(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, 188, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel4)
+                        .addGap(81, 81, 81)
+                        .addComponent(jLabel2))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 196, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
@@ -109,7 +131,7 @@ public class ClientInput extends javax.swing.JFrame {
                                 .addGap(134, 134, 134)
                                 .addComponent(btCreate, javax.swing.GroupLayout.PREFERRED_SIZE, 124, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addComponent(btJoin, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(0, 16, Short.MAX_VALUE)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -129,7 +151,9 @@ public class ClientInput extends javax.swing.JFrame {
                             .addComponent(btJoin, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 21, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel2)
+                            .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 21, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
@@ -140,6 +164,7 @@ public class ClientInput extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btJoinActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btJoinActionPerformed
+        //tham gia vào phòng đang chọn
         if (jListRoom.getSelectedValue()==null){
             JOptionPane.showMessageDialog(this, "Chưa chọn phòng", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
         }
@@ -147,6 +172,33 @@ public class ClientInput extends javax.swing.JFrame {
             joinRoom(jListRoom.getSelectedValue(),TxtTenDangKi.getText());
         }
     }//GEN-LAST:event_btJoinActionPerformed
+
+    private void jLabel2MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel2MouseClicked
+        // TODO add your handling code here:
+        getListRoom();
+    }//GEN-LAST:event_jLabel2MouseClicked
+
+    private void btCreateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btCreateActionPerformed
+        // TODO add your handling code here:
+        //gửi yêu cầu tạo room tới server
+        int ma = -1;
+        try {
+            ma = (Integer.parseInt(JOptionPane.showInputDialog("Nhập mã phòng cần tạo")));
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Nhập lại mã phòng", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+        }
+        if (ma>0){
+            try {
+            Socket socket = new Socket("localhost", 10001);
+            DataOutputStream output = new DataOutputStream(socket.getOutputStream());
+            output.writeUTF("Server###"+ma);
+            socket.close();
+            } catch (IOException ex) {
+                System.out.println("Lỗi gửi tới Server để tạo dữ liệu"+ex);
+            }
+        }
+        
+    }//GEN-LAST:event_btCreateActionPerformed
 
     
     public void joinRoom(String port,String name){
@@ -212,6 +264,7 @@ public class ClientInput extends javax.swing.JFrame {
     private javax.swing.JButton btCreate;
     private javax.swing.JButton btJoin;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JList<String> jListRoom;
